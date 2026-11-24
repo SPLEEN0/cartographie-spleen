@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PEPR SPLEEN – Actors Mapping</title>
+
+<!-- Network -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<!-- CSV parsing -->
+<script src="https://unpkg.com/papaparse@5/papaparse.min.js"></script>
+
+<!-- Excel parsing -->
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body{
+  font-family: Arial, Helvetica, sans-serif;
+  background:#f4f6f9;
+  margin:0 0 40px 0;
+  color:#2c3e50;
+}
+
+/* ==========================
+   HEADER & INSTITUTIONAL BRANDING
+========================== */
+.hero-banner {
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.88), rgba(41, 128, 185, 0.75));
+  background-size: cover;
+  padding: 65px 20px;
+  text-align: center;
+  color: white;
+}
+
+.hero-banner h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.hero-banner .description {
+  margin: 0;
+  color: #ecf0f1;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.institutional-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  background: white;
+  padding: 20px 40px;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  margin-bottom: 40px;
+}
+
+.institution-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.institution-field:last-child {
+  border-right: none;
+}
+
+.institution-field span {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #718096;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.institution-field p {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.institution-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.institution-logos img {
+  height: 45px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* dark chip so the white France 2030 logo stays visible on the white row */
+.logo-chip-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #2c3e50;
+  border-radius: 6px;
+  padding: 5px 12px;
+}
+.logo-chip-dark img {
+  height: 35px;
+}
+.logo-france2030 {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1;
+}
+
+/* ==========================
+   MAIN LAYOUT CONTROLS
+========================== */
+.main-content {
+  padding: 0 40px;
+}
+
+h2{margin-top:40px}
+
+.controls{
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  margin-bottom:30px;
+  flex-wrap:wrap;
+}
+
+.controls label{
+  display:flex;
+  flex-direction:column;
+  font-weight:bold;
+  font-size:13px;
+  gap:5px;
+}
+
+select{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  font-size:13px;
+  min-width:220px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:18px;
+  margin-bottom:60px
+}
+
+.card{
+  background:white;
+  padding:15px;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+  border-top:5px solid #34495e;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+}
+
+.card img{
+  max-width:70px;margin-bottom:10px
+}
+
+.card h3{margin:0 0 6px 0;font-size:16px}
+
+.role{font-size:13px;color:#6b7280;margin-bottom:8px}
+
+.badge{
+  display:inline-block;
+  padding:2px 7px;
+  border-radius:4px;
+  font-size:11px;
+  color:white;
+  margin:2px 2px 2px 0;
+}
+
+#network{
+  height:520px;background:white;border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom:50px
+}
+
+#map{
+  height:520px;background:white;border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.legend{
+  margin-top:20px;
+  font-size:13px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+
+.legend-dot{
+  display:inline-block;
+  width:13px;height:13px;
+  border-radius:3px;
+}
+
+.results-count{
+  text-align:center;
+  color:#6b7280;
+  font-size:13px;
+  margin-bottom:15px;
+}
+
+/* ==========================
+   MODAL OVERLAY LAYOUT
+========================== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  width: 90%;
+  max-width: 655px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+  position: relative;
+  animation: modalReveal 0.25s ease-out;
+}
+
+@keyframes modalReveal {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  background: #2c3e50;
+  color: white;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.modal-header img {
+  max-width: 95px;
+  background: white;
+  padding: 5px;
+  border-radius: 6px;
+}
+
+.modal-header-info h2 {
+  margin: 0 0 5px 0;
+  font-size: 22px;
+}
+
+.modal-header-info p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.modal-body {
+  padding: 25px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.modal-section {
+  margin-bottom: 22px;
+}
+
+.modal-section h4 {
+  margin: 0 0 12px 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 5px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Layered Hierarchical Block Layout Definitions */
+.hierarchy-block {
+  margin-bottom: 14px;
+}
+
+.hierarchy-block:last-child {
+  margin-bottom: 0;
+}
+
+.nested-children-list {
+  margin: 6px 0 0 0;
+  padding-left: 24px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #555;
+  list-style-type: disc;
+}
+
+.nested-children-list li {
+  margin-bottom: 4px;
+}
+
+.modal-contact-links a {
+  color: #2980b9;
+  text-decoration: none;
+  margin-right: 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.modal-contact-links a:hover {
+  text-decoration: underline;
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 26px;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.close-modal:hover {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .institutional-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 20px;
+  }
+  .institution-field {
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+  }
+  .institution-field:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Hero Image Background Banner Block -->
+<div class="hero-banner">
+  <h1>Actors Mapping – PEPR SPLEEN for Industrial Decarbonisation</h1>
+  <p class="description">Interactive directory mapping strategic research actors</p>
+</div>
+
+<!-- PEPR Institutional Matrix Branding -->
+<div class="institutional-row">
+  <div class="institution-field">
+    <span>Led by</span>
+    <p>CNRS & IFPEN</p>
+    <div class="institution-logos">
+      <img src="https://www.google.com/s2/favicons?domain=cnrs.fr&sz=128" onerror="logoFallback(this,'cnrs.fr')" alt="CNRS Logo">
+      <img src="https://www.google.com/s2/favicons?domain=ifpen.fr&sz=128" onerror="logoFallback(this,'ifpen.fr')" alt="IFPEN Logo">
+    </div>
+  </div>
+  <div class="institution-field">
+    <span>Financed by</span>
+    <p>France 2030</p>
+    <div class="institution-logos">
+      <span class="logo-chip-dark logo-france2030">FRANCE&nbsp;2030</span>
+      <img src="https://www.google.com/s2/favicons?domain=gouvernement.fr&sz=128" onerror="logoFallback(this,'gouvernement.fr')" alt="République Française Logo">
+    </div>
+  </div>
+  <div class="institution-field">
+    <span>Operated by</span>
+    <p>ANR</p>
+    <div class="institution-logos">
+      <img src="https://www.google.com/s2/favicons?domain=anr.fr&sz=128" onerror="logoFallback(this,'anr.fr')" alt="ANR Logo">
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+
+  <!-- CSV file loader -->
+  <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:24px;padding:14px 20px;background:white;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <label for="csvFileInput" style="font-weight:bold;font-size:13px;color:#2c3e50;">📂 Load actor data (CSV or Excel):</label>
+    <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls"
+           style="font-size:13px;border:1px solid #ccc;border-radius:5px;padding:5px 8px;cursor:pointer;">
+    <span id="loadStatus" style="font-size:12px;color:#6b7280;font-style:italic;">No file loaded yet</span>
+  </div>
+
+  <div class="controls">
+    <label>
+      SPLEEN Topic
+      <select id="filterTopic">
+        <option value="all">All topics</option>
+        <option value="lowcarbon">Low-Carbon energy integration</option>
+        <option value="heatreuse">Heat reuse</option>
+        <option value="thermal">Electrification of thermal processes</option>
+        <option value="electric">Electrically driven processes</option>
+        <option value="greensteel">Green Steel</option>
+        <option value="co2capture">CO₂ Capture</option>
+        <option value="co2minerals">CO₂ utilisation in minerals</option>
+        <option value="co2chemicals">CO₂/CO utilisation in chemicals and fuels</option>
+        <option value="efficiency">Energy and material efficiency in chemistry</option>
+        <option value="symbiosis">Industrial symbiosis</option>
+        <option value="monitoring">Monitoring emissions and processes</option>
+        <option value="systemic">Systemic and socio-economic approaches</option>
+      </select>
+    </label>
+
+    <label>
+      Scientific Domain
+      <select id="filterDomain">
+        <option value="all">All domains</option>
+        <option value="process">Process Sciences</option>
+        <option value="chemistry">Chemistry</option>
+        <option value="materials">Materials</option>
+        <option value="energy">Energy</option>
+        <option value="computer">Computer science</option>
+        <option value="simulation">Simulation, optimization</option>
+        <option value="geosciences">Geosciences</option>
+        <option value="ssh">Social Sciences and Humanities</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="results-count" id="resultsCount"></div>
+  <div id="actors" class="grid"></div>
+
+  <h2>Scientific Network</h2>
+  <div id="network"></div>
+
+  <h2>Geographic Map</h2>
+  <div id="map"></div>
+
+  <div class="legend">
+    <strong style="width:100%">Scientific Domains</strong>
+    <div class="legend-item"><div class="legend-dot" style="background:#1f77b4"></div>Process Sciences</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff7f0e"></div>Chemistry</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2ca02c"></div>Materials</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9467bd"></div>Energy</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d62728"></div>Computer science</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#17becf"></div>Simulation, optimization</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8c564b"></div>Geosciences</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e377c2"></div>Social Sciences and Humanities</div>
+  </div>
+
+</div>
+
+<!-- Pop-up Overlay Profile Window Container -->
+<div id="detailModal" class="modal-overlay" onclick="handleOutsideClick(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="close-modal" onclick="closeModal()">&times;</button>
+    <div id="modalHeader" class="modal-header"></div>
+    <div id="modalBody" class="modal-body"></div>
+  </div>
+</div>
+
+<script>
+
+/* ==========================
+   LOOKUP TABLES
+========================== */
+
+const topicLabels = {
+  lowcarbon:    "Low-Carbon energy integration",
+  heatreuse:    "Heat reuse",
+  thermal:      "Electrification of thermal processes",
+  electric:     "Electrically driven processes",
+  greensteel:   "Green Steel",
+  co2capture:   "CO₂ Capture",
+  co2minerals:  "CO₂ utilisation in minerals",
+  co2chemicals: "CO₂/CO utilisation in chemicals and fuels",
+  efficiency:   "Energy and material efficiency in chemistry",
+  symbiosis:    "Industrial symbiosis",
+  monitoring:   "Monitoring emissions and processes",
+  systemic:     "Systemic and socio-economic approaches"
+};
+
+// Global mapping directory defining full topic parent-child relationships
+const topicSubtopicsMatrix = {
+  lowcarbon: [
+    "Integration of renewable heat and electricity",
+    "Integration of bioenergy, waste-derived fuels, and new fuels",
+    "Hybrid fuel transition technologies",
+    "Flexibility and demand response"
+  ],
+  heatreuse: [
+    "Advanced heat recovery and reuse technologies"
+  ],
+  thermal: [
+    "Industrial heat pumps",
+    "Electricity-based heating technologies"
+  ],
+  electric: [
+    "Electrochemical conversion processes",
+    "Electrically driven separation technologies"
+  ],
+  greensteel: [
+    "Hydrogen use in industrial processes"
+  ],
+  co2capture: [
+    "Flexible CO₂ capture and purification technologies"
+  ],
+  co2minerals: [
+    "CO₂ use in concrete production",
+    "Mineralisation in building materials"
+  ],
+  co2chemicals: [
+    "Artificial photosynthesis",
+    "Catalytic conversion of CO₂ to chemicals and fuels",
+    "CO₂ and CO as feedstocks for polymers"
+  ],
+  efficiency: [
+    "Digital materials and molecules design",
+    "Next-generation catalysis",
+    "Breakthrough efficiency improvements"
+  ],
+  symbiosis: [
+    "Modelling of industrial symbiosis systems"
+  ],
+  monitoring: [
+    "Digital process development and engineering",
+    "Digital plant operation",
+    "Equipment, facilities, industrial processes monitoring",
+    "Digital support for industrial symbiosis"
+  ],
+  systemic: [
+    "Integration of regulatory, economic aspects",
+    "Social aspects (social levers, society contributions)",
+    "Development of Performance Indicators (including LCA)"
+  ]
+};
+
+const domainLabels = {
+  process:      "Process Sciences",
+  chemistry:    "Chemistry",
+  materials:    "Materials",
+  energy:       "Energy",
+  computer:     "Computer science",
+  simulation:   "Simulation, optimization",
+  geosciences:  "Geosciences",
+  ssh:          "Social Sciences and Humanities"
+};
+
+// Global mapping directory defining full domain parent-child relationships
+const domainSubdomainsMatrix = {
+  process: [
+    "chemical engineering",
+    "process engineering",
+    "reactors"
+  ],
+  chemistry: [
+    "Catalysis",
+    "Electrochemistry",
+    "Physical chemistry",
+    "Materials chemistry",
+    "CO₂ chemistry",
+    "Analytical chemistry",
+    "Computational chemistry"
+  ],
+  materials: [
+    "adsorbents",
+    "membranes",
+    "Green steel",
+    "low-carbon cements"
+  ],
+  energy: [
+    "Thermodynamics",
+    "thermal heat",
+    "solar heat",
+    "heat transfer",
+    "Oxycombustion",
+    "Combustion"
+  ],
+  computer: [
+    "AI",
+    "Data Science",
+    "Control",
+    "Digital twins"
+  ],
+  simulation: [
+    "CFD modeling",
+    "LCA",
+    "Industrial ecology",
+    "Carbon management"
+  ],
+  geosciences: [
+    "Geology",
+    "Geophysics",
+    "Geochemistry"
+  ],
+  ssh: [
+    "Economy",
+    "Finance",
+    "Geography",
+    "Sociology",
+    "Social psychology",
+    "Political sciences"
+  ]
+};
+
+const domainColors = {
+  process:     "#1f77b4",
+  chemistry:   "#ff7f0e",
+  materials:   "#2ca02c",
+  energy:      "#9467bd",
+  computer:    "#d62728",
+  simulation:  "#17becf",
+  geosciences: "#8c564b",
+  ssh:         "#e377c2"
+};
+
+const topicColor = "#34495e";
+
+/* Logo fallback chain: google favicon (primary) -> clearbit logo -> hide */
+function logoFallback(img, domain) {
+  if (!img.dataset.fb1) {
+    img.dataset.fb1 = "1";
+    img.src = "https://logo.clearbit.com/" + domain;
+  } else {
+    img.style.display = "none";
+  }
+}
+
+/* ==========================
+   DATA LOADING (CSV or Excel .xlsx/.xls)
+   Accepts either:
+   - a CSV with header row: id,name,institution,role,topic,domains,subTopics,subDomains,logo,lat,lng,email,linkedin,degree,notes
+   - the Excel workbook "SPLEEN_actors_database.xlsx" (sheet "Actors", header row containing "Full Name")
+   Multi-value fields may use |, ; or , as separator.
+   Topic/domain values may be keys (thermal, co2capture...) or full labels
+   ("Electrification of thermal processes"...) — they are normalized to keys.
+========================== */
+
+// label (lowercased) -> topic key
+const topicLabelToKey = {
+  "lowcarbon": "lowcarbon",
+  "low-carbon energy integration": "lowcarbon",
+  "heatreuse": "heatreuse",
+  "heat reuse": "heatreuse",
+  "waste heat": "heatreuse",
+  "thermal": "thermal",
+  "electrification of thermal processes": "thermal",
+  "electric": "electric",
+  "electrically driven processes": "electric",
+  "greensteel": "greensteel",
+  "green steel": "greensteel",
+  "co2capture": "co2capture",
+  "co₂ capture": "co2capture",
+  "co2 capture": "co2capture",
+  "new system for low energy carbon capture": "co2capture",
+  "co2minerals": "co2minerals",
+  "co₂ utilisation in minerals": "co2minerals",
+  "co2 utilisation in minerals": "co2minerals",
+  "low-carbon cement": "co2minerals",
+  "co2chemicals": "co2chemicals",
+  "co₂/co utilisation in chemicals and fuels": "co2chemicals",
+  "co2/co utilisation in chemicals and fuels": "co2chemicals",
+  "co₂ and co as feedstocks": "co2chemicals",
+  "co2 utilisation/valrization through biological processes": "co2chemicals",
+  "co2 utilisation/transformation through biological processes": "co2chemicals",
+  "efficiency": "efficiency",
+  "symbiosis": "symbiosis",
+  "monitoring": "monitoring",
+  "monitoring of the emissions and processes": "monitoring",
+  "systemic": "systemic",
+  "finance and decarbonation": "systemic"
+};
+
+// label (lowercased) -> domain key
+const domainLabelToKey = {
+  "process": "process",
+  "process science": "process",
+  "process sciences": "process",
+  "bioprocess engineering/chemical engineering": "process",
+  "chemistry": "chemistry",
+  "materials": "materials",
+  "energy": "energy",
+  "bioenergy": "energy",
+  "thermal energy storage": "energy",
+  "computer": "computer",
+  "computer science": "computer",
+  "data science": "computer",
+  "simulation": "simulation",
+  "simulation, optimization": "simulation",
+  "geosciences": "geosciences",
+  "ssh": "ssh",
+  "social sciences and humanities": "ssh"
+};
+
+function norm(s) {
+  return (s || "").toString().trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+// Split a multi-value cell on | or ; . If a resulting piece is not a known
+// key/label and contains commas, try comma-splitting it and keep the parts
+// that are known (handles "CO₂ utilisation in minerals, CO₂ Capture, Green Steel").
+function splitMulti(str, labelMap) {
+  if (!str || String(str).trim() === "") return [];
+  const parts = String(str).split(/[|;]/).map(s => s.trim()).filter(Boolean);
+  const out = [];
+  parts.forEach(p => {
+    const key = labelMap ? (labelMap[norm(p)] || (labelMap[norm(p).replace(/,$/, "")])) : null;
+    if (key) { out.push(key); return; }
+    if (p.includes(",")) {
+      const sub = p.split(",").map(s => s.trim()).filter(Boolean);
+      const keys = sub.map(s => labelMap ? labelMap[norm(s)] : null).filter(Boolean);
+      if (keys.length === sub.length && keys.length > 0) { out.push(...keys); return; }
+    }
+    out.push(p); // unknown value: keep as-is so no information is lost
+  });
+  return [...new Set(out)];
+}
+
+// For subTopics/subDomains: split on | or ; only. Commas inside a value
+// (e.g. "Equipment, facilities, industrial processes monitoring") are kept.
+function splitSub(str) {
+  if (!str || String(str).trim() === "") return [];
+  return String(str).split(/[|;]/).map(s => s.trim()).filter(Boolean);
+}
+
+function normalizeActor(row, fallbackId) {
+  return {
+    id:          parseInt(row.id) || fallbackId,
+    name:        (row.name || "").toString().trim(),
+    institution: (row.institution || "").toString().trim(),
+    role:        (row.role || "").toString().trim(),
+    topic:       splitMulti(row.topic, topicLabelToKey),
+    domains:     splitMulti(row.domains, domainLabelToKey),
+    subTopics:   splitSub(row.subTopics),
+    subDomains:  splitSub(row.subDomains),
+    logo:        (row.logo || "").toString().trim(),
+    lat:         parseFloat(row.lat) || 0,
+    lng:         parseFloat(row.lng) || 0,
+    email:       (row.email || "").toString().trim(),
+    linkedin:    (row.linkedin || "").toString().trim(),
+    degree:      (row.degree || "").toString().trim(),
+    notes:       (row.notes || "").toString().trim()
+  };
+}
+
+function parseCSVRow(row, idx) {
+  return normalizeActor({
+    id: row.id, name: row.name, institution: row.institution, role: row.role,
+    topic: row.topic, domains: row.domains, subTopics: row.subTopics,
+    subDomains: row.subDomains, logo: row.logo, lat: row.lat, lng: row.lng,
+    email: row.email, linkedin: row.linkedin, degree: row.degree, notes: row.notes
+  }, idx + 1);
+}
+
+// Map an Excel header cell to the canonical field key
+const headerToField = {
+  "id": "id", "full name": "name", "institution": "institution",
+  "role / description": "role", "role": "role", "spleen topics": "topic",
+  "topics": "topic", "scientific domains": "domains", "domains": "domains",
+  "sub-topics": "subTopics", "subtopics": "subTopics",
+  "sub-domains": "subDomains", "subdomains": "subDomains",
+  "logo path": "logo", "logo": "logo", "latitude": "lat", "lat": "lat",
+  "longitude": "lng", "lng": "lng", "email": "email", "e-mail": "email",
+  "linkedin url": "linkedin", "linkedin": "linkedin",
+  "degree": "degree", "notes": "notes", "name": "name"
+};
+
+function mapHeader(h) {
+  const key = norm(String(h).replace(/\n/g, " "));
+  if (headerToField[key]) return headerToField[key];
+  for (const k in headerToField) {
+    if (key.startsWith(k)) return headerToField[k];
+  }
+  return null;
+}
+
+function parseSheetRows(sheet) {
+  const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  // find the header row (the one containing "Full Name" or "name")
+  let hIdx = aoa.findIndex(r => r.some(c => norm(c) === "full name" || norm(c) === "name"));
+  if (hIdx === -1) hIdx = 0;
+  const headers = aoa[hIdx].map(mapHeader);
+  const rows = [];
+  for (let i = hIdx + 1; i < aoa.length; i++) {
+    const r = aoa[i];
+    if (r.every(c => String(c).trim() === "")) continue;
+    const obj = {};
+    headers.forEach((f, c) => { if (f) obj[f] = r[c]; });
+    if (!obj.name || String(obj.name).trim() === "") continue;
+    rows.push(obj);
+  }
+  return rows;
+}
+
+let actors = [];
+
+function initApp(data) {
+  actors = data;
+  renderCards(actors);
+  initNetwork(actors);
+  initMap(actors);
+}
+
+// Show a waiting message
+document.getElementById("resultsCount").textContent = "Loading default actors.csv…";
+
+document.getElementById("csvFileInput").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const status = document.getElementById("loadStatus");
+  status.textContent = "Loading…";
+  status.style.color = "#e67e22";
+
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+  const reader = new FileReader();
+
+  reader.onload = function(evt) {
+    try {
+      let data;
+      if (isExcel) {
+        const wb = XLSX.read(evt.target.result, { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        data = parseSheetRows(sheet).map((r, i) => normalizeActor(r, i + 1));
+      } else {
+        const results = Papa.parse(evt.target.result, { header: true, skipEmptyLines: true });
+        data = results.data.map((r, i) => parseCSVRow(r, i));
+      }
+      data = data.filter(a => a.name !== "");
+      status.textContent = "✅ " + file.name + " — " + data.length + " actors loaded";
+      status.style.color = "#27ae60";
+      initApp(data);
+    } catch (err) {
+      status.textContent = "❌ Parse error: " + err.message;
+      status.style.color = "#e74c3c";
+    }
+  };
+  reader.onerror = function() {
+    status.textContent = "❌ Could not read file";
+    status.style.color = "#e74c3c";
+  };
+
+  if (isExcel) reader.readAsArrayBuffer(file);
+  else reader.readAsText(file, "UTF-8");
+});
+
+/* ==========================
+   DEFAULT DATASET AUTO-LOAD
+   Loads actors.csv located next to this HTML file (same folder).
+   Works when the page is served over HTTP(S) (e.g. GitHub Pages).
+   The file picker above remains available to override with another file.
+========================== */
+async function loadDefaultCSV() {
+  const status = document.getElementById("loadStatus");
+  try {
+    const res = await fetch("actors.csv", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const results = Papa.parse(text, { header: true, skipEmptyLines: true });
+    const data = results.data
+      .map((r, i) => parseCSVRow(r, i))
+      .filter(a => a.name !== "");
+    status.textContent = "✅ actors.csv (default dataset) — " + data.length + " actors loaded";
+    status.style.color = "#27ae60";
+    initApp(data);
+  } catch (err) {
+    // No default file (e.g. page opened locally via file://): keep the manual picker.
+    status.textContent = "No default actors.csv found — load a file manually.";
+    status.style.color = "#6b7280";
+    document.getElementById("resultsCount").textContent =
+      "Load your actor file (CSV or Excel) using the button above.";
+  }
+}
+loadDefaultCSV();
+
+/* ==========================
+   RENDER MATRIX OVERVIEW CARDS
+========================== */
+
+const container = document.getElementById("actors");
+
+function renderCards(list){
+  container.innerHTML = "";
+  document.getElementById("resultsCount").textContent =
+    list.length + " actor" + (list.length !== 1 ? "s" : "") + " displayed";
+
+  list.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.onclick = () => openModal(a);
+
+    const domainBadges = a.domains.map(d =>
+      `<span class="badge" style="background:${domainColors[d]||"#999"}" title="${domainLabels[d]||d}">${domainLabels[d]||d}</span>`
+    ).join("");
+
+    const topicBadges = a.topic.map(t => 
+      `<span class="badge" style="background:${topicColor}" title="${topicLabels[t]||t}">${topicLabels[t]||t}</span>`
+    ).join("");
+
+    const institutionLabel = {
+      research:"Research", company:"Company", public:"Public body",
+      association:"Association", territory:"Territory", innovation:"Innovation hub", ifpen:"IFP Energies nouvelles"
+    }[a.institution.toLowerCase()] || a.institution;
+
+    card.innerHTML = `
+      <img src="${a.logo}" onerror="this.style.display='none'">
+      <h3>${a.name}</h3>
+      <p style="font-size:11px;color:#9ca3af;margin:0 0 6px 0;text-transform:uppercase;letter-spacing:0.5px">${institutionLabel}</p>
+      <p class="role">${a.role}</p>
+      <div style="margin-bottom:4px">${topicBadges}</div>
+      <div>${domainBadges}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+/* ==========================
+   EXPANDED PROFILE INTERACTION
+========================== */
+
+function openModal(actor) {
+  const header = document.getElementById("modalHeader");
+  const body = document.getElementById("modalBody");
+
+  const institutionLabel = {
+    research:"Research", company:"Company", public:"Public body",
+    association:"Association", territory:"Territory", innovation:"Innovation hub", ifpen:"IFP Energies nouvelles"
+  }[actor.institution.toLowerCase()] || actor.institution;
+
+  const printedName = actor.degree ? `${actor.name}, ${actor.degree}` : actor.name;
+  header.innerHTML = `
+    <img src="${actor.logo}" onerror="this.style.display='none'">
+    <div class="modal-header-info">
+      <h2>${printedName}</h2>
+      <p>${institutionLabel} — ${actor.role}</p>
+    </div>
+  `;
+
+  let sectionHTML = ``;
+
+  // Contact Category Section
+  if(actor.email || actor.linkedin) {
+    sectionHTML += `<div class="modal-section">
+      <h4>Contact Information</h4>
+      <div class="modal-contact-links">
+        ${actor.email ? `<a href="mailto:${actor.email}">📧 ${actor.email}</a>` : ''}
+        ${actor.linkedin ? `<a href="${actor.linkedin}" target="_blank">🔗 LinkedIn Profile</a>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Layered Parent Topic & Child Sub-topic Structural Mapping Loop
+  sectionHTML += `<div class="modal-section">
+    <h4>SPLEEN Topics</h4>`;
+  
+  actor.topic.forEach(t => {
+    const potentialChildren = topicSubtopicsMatrix[t] || [];
+    const actorActiveChildren = potentialChildren.filter(childName => actor.subTopics && actor.subTopics.includes(childName));
+
+    sectionHTML += `<div class="hierarchy-block">
+      <div style="margin-bottom: 2px;"><span class="badge" style="background:${topicColor}; font-size:12.5px; padding:4px 9px;">${topicLabels[t]||t}</span></div>`;
+      
+    if (actorActiveChildren.length > 0) {
+      sectionHTML += `<ul class="nested-children-list">`;
+      actorActiveChildren.forEach(childName => {
+        sectionHTML += `<li>${childName}</li>`;
+      });
+      sectionHTML += `</ul>`;
+    }
+    sectionHTML += `</div>`;
+  });
+  sectionHTML += `</div>`;
+
+  // Layered Parent Domain & Child Sub-domain Structural Mapping Loop
+  sectionHTML += `<div class="modal-section">
+    <h4>Scientific Domains</h4>`;
+  
+  actor.domains.forEach(d => {
+    const potentialSubDomains = domainSubdomainsMatrix[d] || [];
+    const actorActiveSubDomains = potentialSubDomains.filter(subName => actor.subDomains && actor.subDomains.includes(subName));
+
+    sectionHTML += `<div class="hierarchy-block">
+      <div style="margin-bottom: 2px;"><span class="badge" style="background:${domainColors[d]||"#999"}; font-size:12.5px; padding:4px 9px;">${domainLabels[d]||d}</span></div>`;
+      
+    if (actorActiveSubDomains.length > 0) {
+      sectionHTML += `<ul class="nested-children-list">`;
+      actorActiveSubDomains.forEach(subName => {
+        sectionHTML += `<li>${subName}</li>`;
+      });
+      sectionHTML += `</ul>`;
+    }
+    sectionHTML += `</div>`;
+  });
+  sectionHTML += `</div>`;
+
+  body.innerHTML = sectionHTML;
+  document.getElementById("detailModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("detailModal").style.display = "none";
+}
+
+function handleOutsideClick(event) {
+  if(event.target.id === "detailModal") {
+    closeModal();
+  }
+}
+
+/* ==========================
+   MULTI-ARRAY FILTER RULES
+========================== */
+
+function applyFilters(){
+  const topic  = document.getElementById("filterTopic").value;
+  const domain = document.getElementById("filterDomain").value;
+
+  const filtered = actors.filter(a => {
+    const topicOK  = (topic  === "all" || a.topic.includes(topic));
+    const domainOK = (domain === "all" || a.domains.includes(domain));
+    return topicOK && domainOK;
+  });
+
+  renderCards(filtered);
+}
+
+// applyFilters is called from onchange before actors may be loaded;
+// guard against empty array
+document.getElementById("filterTopic").addEventListener("change", applyFilters);
+document.getElementById("filterDomain").addEventListener("change", applyFilters);
+
+/* ==========================
+   SCIENTIFIC NETWORK
+========================== */
+
+function initNetwork(actors) {
+  const nodes = new vis.DataSet(
+    actors.map(a => ({
+      id:    a.id,
+      label: a.name,
+      shape: (
+        a.institution === "research"    ? "triangle" :
+        a.institution === "company"     ? "box"      :
+        a.institution === "public"      ? "diamond"  :
+        a.institution === "association" ? "star"     :
+        a.institution === "territory"   ? "hexagon"  : "dot"
+      ),
+      color: domainColors[a.domains[0]] || "#999",
+      title: `${a.name}<br>${a.topic.map(t=>topicLabels[t]||t).join(", ")}<br>${a.domains.map(d=>domainLabels[d]||d).join(", ")}`
+    }))
+  );
+
+  const edges = new vis.DataSet(
+    actors.slice(0,-1).map((a,i) => ({from:a.id, to:actors[i+1].id}))
+  );
+
+  new vis.Network(
+    document.getElementById("network"),
+    {nodes, edges},
+    {physics:{stabilization:false}}
+  );
+}
+
+/* ==========================
+   GEOGRAPHIC MAP
+========================== */
+
+function initMap(actors) {
+  const map = L.map('map').setView([46.8, 2.5], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+
+  actors.forEach(a => {
+    if (!a.lat || !a.lng) return;
+    const marker = L.marker([a.lat, a.lng]).addTo(map);
+    marker.bindPopup(`
+      <b>${a.name}</b><br>
+      ${a.role}<br>
+      <i>Topics:</i> ${a.topic.map(t=>topicLabels[t]||t).join(", ")}<br>
+      <i>Domains:</i> ${a.domains.map(d=>domainLabels[d]||d).join(", ")}
+    `);
+  });
+}
+
+</script>
+
+</body>
+</html>
